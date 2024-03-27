@@ -1,4 +1,3 @@
-#Run Length Encoding
 def encode(message):
     encoded_message = ""
     i = 0
@@ -15,6 +14,5 @@ def encode(message):
         encoded_message=encoded_message+ch+str(count)
         i = j+1
     return encoded_message
-#Provide different values for message and test your program
 encoded_message=encode("AAAAABBBBBCDEEE")
 print(encoded_message)
