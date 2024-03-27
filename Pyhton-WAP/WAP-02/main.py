@@ -1,4 +1,4 @@
-# Function to load data
+# Function to create a list of disctionaries
 def load_data():
     return [
         {"Employee ID": 1, "Employee Name": "Will Smith", "Department": "Marketing", "Salary": 52000.0, "Years of Experience": 5},
@@ -8,41 +8,41 @@ def load_data():
         {"Employee ID": 5, "Employee Name": "Chrish Brown", "Department": "Physics", "Salary": 85000.0, "Years of Experience": 12},
     ]
 
-# Function to display employee information
-def display_employee_info(employee_id, dataset):
-    for employee in dataset:
-        if employee["Employee ID"] == employee_id:
+# Function to display spefcific employee's information
+def display_info(emp_id, employees):
+    for employee in employees:
+        if employee["Employee ID"] == emp_id:
             print("Employee ID:", employee["Employee ID"])
             print("Employee Name:", employee["Employee Name"])
             print("Department:", employee["Department"])
             print("Salary:", employee["Salary"])
             print("Years of Experience:", employee["Years of Experience"])
             return
-    print("Employee not found.")
+    print("Employee doesn't exist.")
 
 # Algorithm 1: Calculate Average Salary
-def calculate_average_salary(dataset):
+def avg_salary(dataset):
     total_salary = sum(employee["Salary"] for employee in dataset)
     average_salary = total_salary / len(dataset)
     print("Average Salary:", average_salary)
 
 # Algorithm 2: Department-wise Salary Distribution
-def department_salary_distribution(dataset):
-    department_salary_distribution = {}
+def salary_dist(dataset):
+    salary_dist = {}
     for employee in dataset:
-        if employee["Department"] not in department_salary_distribution:
-            department_salary_distribution[employee["Department"]] = {"total_employees": 0, "total_salary": 0}
-        department_salary_distribution[employee["Department"]]["total_employees"] += 1
-        department_salary_distribution[employee["Department"]]["total_salary"] += employee["Salary"]
+        if employee["Department"] not in salary_dist:
+            salary_dist[employee["Department"]] = {"total_employees": 0, "total_salary": 0}
+        salary_dist[employee["Department"]]["total_employees"] += 1
+        salary_dist[employee["Department"]]["total_salary"] += employee["Salary"]
 
-    for department, info in department_salary_distribution.items():
+    for department, info in salary_dist.items():
         average_salary = info["total_salary"] / info["total_employees"]
         print("Department:", department)
         print("Total Employees:", info["total_employees"])
         print("Average Salary:", average_salary)
 
 # Function to identify high experience employees
-def identify_high_experience_employees(dataset):
+def high_exp_emp(dataset):
     high_experience_employees = []
     for employee in dataset:
         if employee["Years of Experience"] > 10:
@@ -55,7 +55,7 @@ def identify_high_experience_employees(dataset):
         print("No high experience employees found.")
 
 # Function to update employee salary
-def update_employee_salary(employee_id, new_salary, dataset):
+def change_salary(employee_id, new_salary, dataset):
     for employee in dataset:
         if employee["Employee ID"] == employee_id:
             employee["Salary"] = new_salary
@@ -78,18 +78,18 @@ if __name__ == "__main__":
 
         if choice == "1":
             employee_id = int(input("Enter Employee ID: "))
-            display_employee_info(employee_id,
+            display_info(employee_id,
  dataset)
         elif choice == "2":
-            calculate_average_salary(dataset)
+            avg_salary(dataset)
         elif choice == "3":
-            department_salary_distribution(dataset)
+            salary_dist(dataset)
         elif choice == "4":
-            identify_high_experience_employees(dataset)
+            high_exp_emp(dataset)
         elif choice == "5":
             employee_id = int(input("Enter Employee ID: "))
             new_salary = float(input("Enter new salary: "))
-            update_employee_salary(employee_id, new_salary, dataset)
+            change_salary(employee_id, new_salary, dataset)
         elif choice == "6":
             print("Exiting program...")
             break
