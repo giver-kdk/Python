@@ -16,26 +16,31 @@ class TeamsAutoTyper:
         self.root = root
         self.root.title("Teams Auto Typer")
         self.root.geometry("500x400")
-
         self.running = False
-        self.days_disabled = {
-            "Mon": False,
-            "Tue": False,
-            "Wed": False,
-            "Thu": False,
-            "Fri": False
+
+        # Load configuration
+        self.config_file = r"D:\CODES\Python\Python-Projects\AutoClocker\config\config.json"
+        self.load_config()
+
+        # Days enabled (default: all days are enabled)
+        self.days_enabled = {
+            "Mon": True,
+            "Tue": True,
+            "Wed": True,
+            "Thu": True,
+            "Fri": True
         }
 
         # Threshold control
         self.threshold_label = ttk.Label(root, text="Randomness Threshold (minutes):")
         self.threshold_label.pack(pady=5)
 
-        self.threshold_var = tk.IntVar(value=15)  # Default threshold is 15 minutes
+        self.threshold_var = tk.IntVar(value=self.config.get("threshold", 15))  # Default threshold is 15 minutes
         self.threshold_spinbox = ttk.Spinbox(root, from_=0, to=60, textvariable=self.threshold_var, width=5)
         self.threshold_spinbox.pack(pady=5)
 
         # Toggle button
-        self.toggle_button = ttk.Button(root, text="Start", command=self.toggle)
+        self.toggle_button = ttk.Button(root, text="Start" if not self.config.get("running", False) else "Stop", command=self.toggle)
         self.toggle_button.pack(pady=10)
 
         # Edit button
@@ -44,25 +49,15 @@ class TeamsAutoTyper:
 
         # Days checkboxes and time entries
         self.day_vars = {}
-        self.time_entries = {
-            "Mon_in": "09:30",
-            "Mon_out": "18:30",
-            "Tue_in": "09:30",
-            "Tue_out": "18:30",
-            "Wed_in": "08:30",
-            "Wed_out": "17:30",
-            "Thu_in": "08:30",
-            "Thu_out": "17:30",
-            "Fri_in": "08:30",
-            "Fri_out": "17:30"
-        }  # To store time entry widgets
+        self.time_entries = {}  # To store time entry widgets
+        self.edit_mode = False  # Whether time entries are editable
 
-        for day in self.days_disabled.keys():
+        for day in self.days_enabled.keys():
             frame = ttk.Frame(root)
             frame.pack(pady=5)
 
             # Checkbox for enabling/disabling the day
-            var = tk.BooleanVar()
+            var = tk.BooleanVar(value=self.days_enabled[day])
             chk = ttk.Checkbutton(frame, text=day, variable=var, onvalue=True, offvalue=False)
             chk.pack(side=tk.LEFT, padx=5)
             self.day_vars[day] = var
@@ -91,14 +86,41 @@ class TeamsAutoTyper:
         # Schedule jobs
         self.schedule_jobs()
 
-
-        self.edit_mode = False  # Whether time entries are editable
         # Ensure the app runs in the background
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
+
+    def load_config(self):
+        """Load configuration from the JSON file."""
+        try:
+            with open(self.config_file, "r") as f:
+                self.config = json.load(f)
+        except FileNotFoundError:
+            # Default configuration
+            self.config = {
+                "threshold": 15,
+                "running": False,
+                "days_enabled": {
+                    "Mon": True,
+                    "Tue": True,
+                    "Wed": True,
+                    "Thu": True,
+                    "Fri": True
+                }
+            }
+
+    def save_config(self):
+        """Save configuration to the JSON file."""
+        self.config["threshold"] = self.threshold_var.get()
+        self.config["running"] = self.running
+        self.config["days_enabled"] = {day: var.get() for day, var in self.day_vars.items()}
+
+        with open(self.config_file, "w") as f:
+            json.dump(self.config, f)
 
     def toggle(self):
         self.running = not self.running
         self.toggle_button.config(text="Stop" if self.running else "Start")
+        self.save_config()  # Save the running state
         if self.running:
             self.run_scheduler()
 
@@ -107,7 +129,7 @@ class TeamsAutoTyper:
         self.edit_mode = not self.edit_mode
         self.edit_button.config(text="Save Times" if self.edit_mode else "Edit Times")
 
-        for day in self.days_disabled.keys():
+        for day in self.days_enabled.keys():
             self.time_entries[f"{day}_in"].config(state="normal" if self.edit_mode else "readonly")
             self.time_entries[f"{day}_out"].config(state="normal" if self.edit_mode else "readonly")
 
@@ -119,7 +141,7 @@ class TeamsAutoTyper:
     def save_times(self):
         """Save the type-in and type-out times to a file."""
         times = {}
-        for day in self.days_disabled.keys():
+        for day in self.days_enabled.keys():
             times[f"{day}_in"] = self.time_entries[f"{day}_in"].get()
             times[f"{day}_out"] = self.time_entries[f"{day}_out"].get()
 
@@ -134,7 +156,7 @@ class TeamsAutoTyper:
                 times = json.load(f)
             
             # Fetch times for each day and insert into the entry widgets
-            for day in self.days_disabled.keys():
+            for day in self.days_enabled.keys():
                 # Type-In time
                 type_in_time = times.get(f"{day}_in", "09:30")  # Default to "09:30" if key not found
                 self.time_entries[f"{day}_in"].config(state="normal")  # Temporarily enable editing
@@ -151,7 +173,7 @@ class TeamsAutoTyper:
 
         except FileNotFoundError:
             # If the file doesn't exist, use default times
-            for day in self.days_disabled.keys():
+            for day in self.days_enabled.keys():
                 # Type-In time (default)
                 self.time_entries[f"{day}_in"].config(state="normal")  # Temporarily enable editing
                 self.time_entries[f"{day}_in"].delete(0, tk.END)  # Clear the entry
@@ -163,7 +185,6 @@ class TeamsAutoTyper:
                 self.time_entries[f"{day}_out"].delete(0, tk.END)  # Clear the entry
                 self.time_entries[f"{day}_out"].insert(0, "18:30")  # Insert default time
                 self.time_entries[f"{day}_out"].config(state="readonly")  # Revert to readonly
-
 
     def add_randomness(self, base_time):
         """
@@ -195,8 +216,17 @@ class TeamsAutoTyper:
         # Clear existing jobs
         schedule.clear()
 
+        # Map day abbreviations to full names
+        day_map = {
+            "Mon": "monday",
+            "Tue": "tuesday",
+            "Wed": "wednesday",
+            "Thu": "thursday",
+            "Fri": "friday"
+        }
+
         # Schedule tasks with randomness for each day
-        for day in self.days_disabled.keys():
+        for day in self.days_enabled.keys():
             if not self.day_vars[day].get():  # Skip if the day is disabled
                 continue
 
@@ -204,9 +234,12 @@ class TeamsAutoTyper:
             type_in_time = self.time_entries[f"{day}_in"].get()
             type_out_time = self.time_entries[f"{day}_out"].get()
 
+            # Get the full day name
+            full_day = day_map[day]
+
             # Schedule type-in and type-out tasks
-            self.schedule_with_randomness(schedule.every().__getattribute__(day.lower()), type_in_time, self.type_in)
-            self.schedule_with_randomness(schedule.every().__getattribute__(day.lower()), type_out_time, self.type_out)
+            self.schedule_with_randomness(getattr(schedule.every(), full_day), type_in_time, self.type_in)
+            self.schedule_with_randomness(getattr(schedule.every(), full_day), type_out_time, self.type_out)
 
     def is_teams_running(self):
         """Check if Microsoft Teams is running."""
@@ -258,7 +291,7 @@ class TeamsAutoTyper:
             print(f"Error locating chat: {e}")
 
     def type_in(self):
-        if not self.running or self.days_disabled[datetime.now().strftime("%a")]:
+        if not self.running or not self.day_vars[datetime.now().strftime("%a")].get():
             return
         if self.open_teams():
             self.navigate_to_chat("SpiralBot")
@@ -266,7 +299,7 @@ class TeamsAutoTyper:
             pyautogui.press("enter")
 
     def type_out(self):
-        if not self.running or self.days_disabled[datetime.now().strftime("%a")]:
+        if not self.running or not self.day_vars[datetime.now().strftime("%a")].get():
             return
         if self.open_teams():
             self.navigate_to_chat("SpiralBot")
@@ -281,12 +314,9 @@ class TeamsAutoTyper:
 
         threading.Thread(target=scheduler_loop, daemon=True).start()
 
-    def update_days_disabled(self):
-        for day, var in self.day_vars.items():
-            self.days_disabled[day] = var.get()
-
     def on_close(self):
         """Handle the window close event."""
+        self.save_config()  # Save configuration before closing
         if self.running:
             self.running = False
         self.root.destroy()
