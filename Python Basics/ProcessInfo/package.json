@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "pidusage": "^3.0.2",
+    "systeminformation": "^5.23.5"
+  }
+}
