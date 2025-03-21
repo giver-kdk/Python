@@ -1,4 +1,6 @@
 import tkinter as tk
+import ctypes
+from PIL import Image, ImageTk
 from tkinter import ttk, messagebox
 import threading
 import time
@@ -78,7 +80,7 @@ class TeamsAutoTyper:
 
         # Teams path input (unchanged)
         self.teams_path = r"C:\Program Files\WindowsApps\MSTeams_25060.205.3499.6849_x64__8wekyb3d8bbwe\ms-teams.exe"
-        self.image_path = r'D:\CODES\Python\Python-Projects\AutoClocker\chat-image.png'
+        self.image_path = r'D:\CODES\Python\Python-Projects\AutoClocker\assets\chatimage.png'
 
         # Load saved times
         self.load_times()
@@ -323,5 +325,12 @@ class TeamsAutoTyper:
 
 if __name__ == "__main__":
     root = tk.Tk()
+    root.title("Auto Clocker")
     app = TeamsAutoTyper(root)
+    # App Icon
+    img = Image.open(r"D:\CODES\Python\Python-Projects\AutoClocker\assets\type-icon.png")
+    photo = ImageTk.PhotoImage(img)
+    root.iconphoto(True, photo)
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("AutoClockerID")
+    # Run App
     root.mainloop()
