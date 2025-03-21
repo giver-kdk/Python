@@ -253,7 +253,7 @@ class TeamsAutoTyper:
         if not self.is_teams_running():
             if os.path.exists(self.teams_path):
                 subprocess.Popen([self.teams_path, '--processStart', 'Teams.exe'])
-                time.sleep(10)  # Wait for Teams to open
+                time.sleep(3)  # Wait for Teams to open
             else:
                 print("Microsoft Teams not found. Please ensure it is installed.")
                 return False
@@ -295,7 +295,7 @@ class TeamsAutoTyper:
             return
         if self.open_teams():
             self.navigate_to_chat("SpiralBot")
-            pyautogui.write("Hi")
+            pyautogui.write("In")
             pyautogui.press("enter")
 
     def type_out(self):
